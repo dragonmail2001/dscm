@@ -1,0 +1,499 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>Conf Creator - Powered By Cloudy-sdcm</title>
+<meta name="author" content="Cloudy-sdcm Team" />
+<meta name="copyright" content="Cloudy-sdcm" />
+<link href="css/common.css" rel="stylesheet" type="text/css" />
+<link href="jsoneditor/jsoneditor.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+    #jsoneditor {
+      height: 400px;
+      width: 600px;
+      font: 10.5pt arial;
+      color: #4d4d4d;  
+    }
+    table.input table.tree td{
+    	padding:0;
+    	border-bottom:none;
+    	line-height:20px;
+    }
+    table.input table.search td{
+	    padding:0;
+	    line-height:20px;
+	    border-bottom:none;
+	    padding-top:1px;
+    }
+</style>  
+<script type="text/javascript" src="jsoneditor/jsoneditor.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/jquery.tools.js"></script>
+<script type="text/javascript" src="js/jquery.validate.js"></script>
+<script type="text/javascript" src="js/common.js"></script>
+<script type="text/javascript">
+function getCookie(name) {
+	var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+	if(arr=document.cookie.match(reg))
+	return unescape(arr[2]);
+	else
+	return null;
+}
+
+function setCookie(name,value){
+	var Days = 30;
+	var exp = new Date();
+	exp.setTime(exp.getTime() + Days*24*60*60*1000);
+	document.cookie = name + "="+ escape (value) + ";expires=" + exp.toGMTString();
+}
+
+function delCookie(name){
+	var exp = new Date();
+	exp.setTime(exp.getTime() - 1);
+	var cval=getCookie(name);
+	if(cval!=null)
+	document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+}
+
+function insertRightHtml() {
+  	var html = "", rights = getCookie("rights");
+  	if(rights != null && rights.trim().length > 0) {
+  		var json = JSON.parse(rights);
+  		for(var i=0; i<json.length; i++) {
+  			var cval = json[i].type+':'+json[i].right;
+  			html = html + '<span>'+ cval +'</span>&nbsp;<a class="rightA'+i+'">去除</a>';
+  			if(i < json.length -1) {
+  				html = html + '&nbsp;|&nbsp;';
+  			}
+  		}
+
+  		$('.rightS').html(html);
+
+  		for(var i=0; i<json.length; i++) {
+  			$('.rightA'+i).bind('click',json[i],function(e){
+  				var json={}, array=[], rights = getCookie("rights");
+			  	if(rights != null && rights.trim().length > 0) {
+			  		json = JSON.parse(rights);
+			  	} 
+
+			  	for(var i=0; i<json.length; i++) {
+			  		if(json[i].right == e.data.right) {
+			  			continue;
+			  		}
+			  		array[array.length]=json[i];
+			  	} 	
+
+				var cval = JSON.stringify(array);
+				setCookie("rights",cval);
+			  	insertRightHtml();
+  			});
+  		}
+  		
+  	} 	
+}
+
+function insertUrlsHtml() {
+  	var html = "", urls = getCookie("urls");
+  	if(urls != null && urls.trim().length > 0) {
+  		var json = JSON.parse(urls);
+  		for(var i=0; i<json.length; i++) {
+  			var cval = json[i].type+':'+json[i].url;
+  			html = html + '<span>'+ cval +'</span>&nbsp;<a class="urlsA'+i+'">去除</a>';
+  			if(i < json.length -1) {
+  				html = html + '&nbsp;|&nbsp;';
+  			}
+  		}
+
+  		$('.urlsS').html(html);
+
+  		for(var i=0; i<json.length; i++) {
+  			$('.urlsA'+i).bind('click',json[i],function(e){
+  				var json={}, array=[], urls = getCookie("urls");
+			  	if(urls != null && urls.trim().length > 0) {
+			  		json = JSON.parse(urls);
+			  	} 
+
+			  	for(var i=0; i<json.length; i++) {
+			  		if(json[i].url == e.data.url) {
+			  			continue;
+			  		}
+			  		array[array.length]=json[i];
+			  	} 	
+
+				var cval = JSON.stringify(array);
+				setCookie("urls",cval);
+			  	insertUrlsHtml();
+  			});
+  		}
+  		
+  	} 	
+}
+
+function rightName(pair, idx) {
+	var url = pair.right;
+	var pos = url.indexOf("?");
+	if(pos >= 0) {
+		url = url.substr(0,pos)
+	}
+	var car = url.split('/');
+	var url = car.join('');
+	return url + idx;
+}
+
+function insertItfsHtml(editor) {
+  	var json=[], array=[], rights = getCookie("rights");
+  	if(rights != null && rights.trim().length > 0) {
+	  	json = JSON.parse(rights);
+	  	for(var i=0; i<json.length; i++) {
+	  		array.push({"next":[],"uuid":rightName(json[i],i)});
+	  	}
+
+	  	editor.setText(JSON.stringify(array));	
+  	} 
+}
+
+$().ready(function() {
+	String.prototype.trim=function() { return this.replace(/(^\s*)|(\s*$)/g, ""); }
+  	var editor = new JSONEditor(document.getElementById('jsoneditor'), {
+	    mode: 'code',
+	    modes: ['code', 'text', 'tree'], // allowed modes
+	    error: function (err) {
+	      alert(err.toString());
+	    },
+	    change: function(text){
+	    	//$("[name=params]").val(editor.getText());
+	    }
+  	}, {});	
+
+  	var left = getCookie("left");
+  	if(left != null && left.trim().length > 0) {
+  		try{
+  			var json = JSON.parse(left);
+  			json.auth == null ? json.auth = "false" : json.auth;
+	  		$("input[name=left]").val(json.left);
+	  		$("select[name=typeLeft]").val(json.type);
+	  		$("select[name=authLeft]").val(json.auth);
+  		}catch(err) {
+
+  		}
+  	}
+
+ 	insertRightHtml();
+ 	insertUrlsHtml();
+
+
+	$("input[name=right]").click(function(){
+		var lstr = $("input[name=left]").val();
+		var type = $("select[name=typeLeft]").val();
+		var auth = $("select[name=authLeft]").val();
+	    if(lstr == null || lstr.trim().length <= 0) {
+	    	alert('请先填写前端接口完整地址');
+	    	return;
+	    }
+
+	    var json={'left':lstr,'type':type, 'auth':auth};
+
+	    setCookie("left",JSON.stringify(json));					
+	});  	
+
+	$('.urlsA').click(function(){
+		var rurl = $("input[name=urls]").val();	
+		var type = $("select[name=typeUrls]").val();	
+		if(rurl == null || rurl.trim().length <= 0) {
+			alert("请填写资源地址");
+			return;
+		}	
+
+		if(type == null || type.trim().length <= 0) {
+			alert("请选择资源类型");
+			return;
+		}	
+
+	  	var json=[], urls = getCookie("urls");
+	  	if(urls != null && urls.trim().length > 0) {
+	  		json = JSON.parse(urls);
+		  	for(var i=0; i<json.length; i++) {
+		  		if(json[i].url == rurl) {
+		  			alert("资源地址重复");
+		  			return;
+		  		}
+		  	} 
+	  	}  		
+
+	  	json[json.length]={'url':rurl,'type':type};
+
+		var cval = JSON.stringify(json);
+		setCookie("urls",cval);
+
+		insertUrlsHtml();	
+	});  
+
+	$('.rightA').click(function(){
+		var rstr = $("input[name=right]").val();	
+		var tstr = $("select[name=typeRight]").val();	
+		if(rstr == null || rstr.trim().length <= 0) {
+			alert("请填写后端接口完整地址");
+			return;
+		}	
+
+		if(tstr == null || tstr.trim().length <= 0) {
+			alert("请选择后端接口类型");
+			return;
+		}	
+
+	  	var json=[], rights = getCookie("rights");
+	  	if(rights != null && rights.trim().length > 0) {
+	  		json = JSON.parse(rights);
+		  	for(var i=0; i<json.length; i++) {
+		  		if(json[i].right == rstr) {
+		  			alert("后端接口重复");
+		  			return;
+		  		}
+		  	} 
+	  	}  		
+
+	  	json[json.length]={'right':rstr,'type':tstr};
+
+		var cval = JSON.stringify(json);
+		setCookie("rights",cval);
+
+		insertRightHtml();	
+	});	
+
+	$('.itfsA').click(function(){
+	  	var json=[], array=[], rights = getCookie("rights");
+	  	if(rights == null || rights.trim().length <= 0) {
+	  		alert("后端接口还没填写?");
+	  		return;
+	  	} 
+
+	  	insertItfsHtml(editor);
+	});	
+
+	$("#configure").click(function(){
+		var json = createLeft(editor);
+	});  	
+});
+
+function createLeft(editor) {
+	var json = {}, rson = {}, left = getCookie("left");
+  	if(left == null || left.trim().length <= 0) {
+  		alert('请先填写前端接口完整地址');
+  		return json;
+  	}
+
+  	json = JSON.parse(left);
+  	var fname, array = json.left.split("?");
+  	if(array.length > 0) {
+  		var urls = array[0].split(".");
+  		var curl = urls[0].split("/");
+  		var url = curl.join("");
+  		fname = url + urls[1];
+  		if(json.type == "html"){
+  			rson["type"] = "html";
+  		}else{
+  			rson["type"] = "json";
+  		}
+
+  		if(json.auth == null || json.auth == "false"){
+  			rson["auth"] = false;
+  		}else{
+  			rson["auth"] = true;
+  		}  		
+
+		rson["otpl"] = url+"html";
+		rson["mkey"] = [];
+
+		//mkey
+		var rights = getCookie("rights");
+		if(array.length > 1) {
+		  	if(rights != null && rights.trim().length > 0) {
+		  		var json = JSON.parse(rights);	
+		  		if(json.length > 0) {
+		  			for(var n=0; n<json.length; n++) {
+		  				var rname = rightName(json[n],n);
+		  					var pars = array[1].split("&");
+							for(var m=0; m<pars.length; m++){
+								var keys = pars[m].split("=");
+								rson["mkey"][rson["mkey"].length] = {
+									"fkey":keys[0],
+									"bkey":keys[1],
+									"uuid":rname
+								};
+							}
+		  			}
+		  		}	
+		  	}
+		}
+
+		//back
+		rson["back"] = {};
+	  	if(rights != null && rights.trim().length > 0) {
+	  		var json = JSON.parse(rights);	
+  			for(var n=0; n<json.length; n++) {
+  				var rname = rightName(json[n],n);
+  				rson["back"][rname]={};
+
+  				rson["back"][rname]["host"]="ghost.gback(env)['h88']";
+  				rson["back"][rname]["itpl"]=rname;
+  				rson["back"][rname]["iurl"]=json[n].right;
+  				if(json[n].type == "sdcm"){
+  					rson["back"][rname]["meth"]="post";
+  					rson["back"][rname]["type"]="sdcm";
+  				}else if(json[n].type == "post"){
+  					rson["back"][rname]["meth"]="post";
+  					rson["back"][rname]["type"]="json";
+  				}else if(json[n].type == "get"){
+  					rson["back"][rname]["meth"]="get";
+  					rson["back"][rname]["type"]="json";
+  				}
+  				
+  				rson["back"][rname]["port"]="ghost.gback(env)['p88']";
+  				
+  			}
+	  	}
+
+	  	//itfs		
+	  	rson["itfs"] = JSON.parse(editor.getText());
+
+	  	//urls
+	  	rson["urls"] = [];
+	  	var have=false, urls = getCookie("urls");
+	  	if(urls != null && urls.trim().length > 0) {
+	  		json = JSON.parse(urls);
+		  	for(var i=0; i<json.length; i++) {
+		  		var ejs = ".ejs";
+		  		if(json[i].type == 'ejs'){
+			  		rson["urls"][rson["urls"].length]={
+			  			"itpl":json[i].url,
+			  			"name":urlsName(json[i].url),
+			  			"ext":".ejs"
+			  		};
+		  		}else{
+			  		rson["urls"][rson["urls"].length]={
+			  			"itpl":json[i].url,
+			  			"name":urlsName(json[i].url)
+			  		};
+		  		}
+
+		  		if(urlsName(json[i].url) == rson["otpl"]){
+		  			have = true;
+		  		}
+		  	} 
+	  	}  
+
+
+	  	if(!have) {
+	  		alert("输出模版不在资源列表中["+rson["otpl"]+"]??");
+	  		return {};
+	  	}
+  	}
+
+  	export_raw(fname,JSON.stringify(rson));
+  	return rson;
+}
+
+function urlsName(urls) {
+	var turl = urls.split('/');
+	var curl = turl.join('');
+	var murl = curl.split('.');
+	return murl.join('');
+}
+
+function fake_click(obj) {
+    var ev = document.createEvent("MouseEvents");
+    ev.initMouseEvent(
+        "click", true, false, window, 0, 0, 0, 0, 0
+        , false, false, false, false, 0, null
+        );
+    obj.dispatchEvent(ev);
+}
+
+function export_raw(name, data) {
+    var urlObject = window.URL || window.webkitURL || window;
+
+    var export_blob = new Blob([data]);
+
+    var save_link = document.createElementNS("http://www.w3.org/1999/xhtml", "a")
+    save_link.href = urlObject.createObjectURL(export_blob);
+    save_link.download = name;
+    fake_click(save_link);
+}
+
+</script>
+</head>
+<body>
+	<form id="inputForm" action="save.cgi" method="post">
+		<table class="input">
+			<tr>
+				<th>前端接口完整地址:</th>
+				<td>
+					<input type="text" name="left" class="text" maxlength="200"/>
+					<br/>
+					<select name="typeLeft">
+						<option value="json">json</option>
+						<option value="html">html</option>
+					</select>
+					<select name="authLeft">
+						<option value="false">不需要认证</option>
+						<option value="true">需要认证</option>
+					</select>											
+				</td>
+			</tr>		
+			<tr>
+				<th>后端接口完整地址:</th>
+				<td>
+					<input type="text" name="right" class="text" maxlength="200" />
+					&nbsp;&nbsp;<a class="rightA">增加</a>
+					<br/>
+					<select name="typeRight">
+						<option value="dscm">dscm</option>
+						<option value="post">post</option>
+						<option value="get">get</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<th></th>
+				<td><div class="rightS"></div></td>
+			</tr>			
+			<tr>
+				<th>所需必备资源地址:</th>
+				<td>
+					<input type="text" name="urls" class="text" maxlength="200" />
+					&nbsp;&nbsp;<a class="urlsA">增加</a>
+					<br/>
+					<select name="typeUrls">
+						<option value="js">js</option>
+						<option value="ejs">ejs</option>
+					</select>
+				</td>
+			</tr>	
+			<tr>
+				<th></th>
+				<td><div class="urlsS"></div></td>
+			</tr>				
+			<tr>
+				<th>
+					<span class="requiredField">*</span>后端接口调用关系:
+					<br/>
+					<a class="itfsA" color="red">生成默认</a>	
+				</th>
+				<td>
+					<div id="jsoneditor"></div>			
+				</td>
+			</tr>				
+			<tr>
+				<th>
+					&nbsp;
+				</th>
+				<td>
+					<input type="button" class="button" id="configure" value="配置文件" />
+					<input type="button" class="button" value="模版文件" />
+					<input type="button" class="button" value="源码文件" />
+				</td>
+			</tr>
+		</table>
+	</form>
+</body>
+</html>
